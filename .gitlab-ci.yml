@@ -1,0 +1,67 @@
+stages:
+  - install_deps
+#   - test
+  - build
+  - deploy
+
+# 缓存上次数据
+cache:
+  key: ${CI_BUILD_REF_NAME}
+  paths:
+    - node_modules/
+    - dist/
+
+# 安装依赖 属于 stage: install_deps
+install_dependence:
+  stage: install_deps
+  script:
+    # node_modules 不存在就安装。存在就不安装
+    # - yarn
+    - cnpm i
+    # - rm -rf node_modules
+    # - yarn && echo yarn install succeed
+  # only:
+  #   - master
+
+# 测试 e2e
+# e2e_test:
+#   stage: test
+#   script:
+#     - npm run test:e2e
+#   only:
+#     - master
+#     - develop
+
+# 构建 build
+build_in_gitlab_runner:
+  stage: build
+  script:
+    - cnpm i element-theme -g
+    - et
+    - npm run build
+  # only:
+  #   - master
+  #   - develop
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - dist
+
+# 部署到测试服务器
+deploy_test :
+  stage: deploy
+  script:
+    - sh ./gitlab-ci/test.deploy.sh
+  only:
+    # - master 代表测试服务器
+    - master
+
+# 部署线上
+deploy_online:
+  stage: deploy
+  script:
+    - ls -a
+    - sh ./gitlab-ci/prod.deploy.sh
+  only:
+    #- prod 分支代表正式服务器
+    - prod
